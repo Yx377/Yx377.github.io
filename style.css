@@ -20,3 +20,5 @@
 @media(min-width:681px) and (max-height:820px){.hero-portrait{width:clamp(260px,42svh,320px)}.hero-portrait .art-image{height:auto;aspect-ratio:2/3}.hero-body{grid-template-columns:43% 57%}.hero-portrait .art-caption{font-size:7px}.hero-portrait .art-caption>span:last-child{font-size:6px}}
 @media(max-width:680px){.hero-portrait{width:84%;max-width:300px;align-self:center;margin-top:12px}.hero-portrait .art-image{height:auto;aspect-ratio:2/3}.hero-portrait .art-caption{font-size:7px;padding-block:12px}.hero-portrait .art-caption>span:last-child{font-size:6px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}.opening{display:none}.page-ready .reveal:not(.is-visible){opacity:1;transform:none}}
+.quick-portfolio-link{font-size:10px;letter-spacing:.05em;border-bottom:1px solid var(--line);padding:10px 0;margin-bottom:6px;white-space:nowrap}
+.quick-portfolio-link span{margin-left:12px;color:var(--accent)}
