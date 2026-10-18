@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f2ed">
+  <meta name="description" content="姚星冉的设计作品详情：中文项目介绍、基本信息与六幅精选画廊，探索完整设计过程。">
+  <title>作品详情 · 姚星冉</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="project.css">
+  <link rel="stylesheet" href="reader.css">
+  <script src="projects.js" defer></script>
+  <script src="assets/pages.js" defer></script>
+  <script src="reader.js" defer></script>
+  <script src="project.js" defer></script>
+</head>
+<body class="detail-body">
+  <a class="detail-skip" href="#detail-scroll">跳至作品画廊</a>
+  <header class="detail-header">
+    <a class="detail-back" href="index.html#works"><span aria-hidden="true">←</span> 返回作品目录</a>
+    <a class="detail-signature" href="index.html" aria-label="姚星冉，返回首页">y<span aria-hidden="true">※</span><small>YAO XINGRAN</small></a>
+    <label class="detail-menu-label"><span class="detail-sr-only">切换作品</span><select id="detail-menu" aria-label="切换作品"><option>正在加载作品</option></select></label>
+  </header>
+
+  <main class="detail-page" id="detail-page" hidden>
+    <aside class="detail-sidebar" aria-label="中文作品介绍与基本信息">
+      <div class="detail-sidebar-top"><span>SELECTED PROJECT</span><span><b id="project-number">01</b> / 05</span></div>
+      <p class="detail-category" id="project-category"></p>
+      <h1 id="project-title"></h1>
+      <p class="detail-english" id="project-english"></p>
+      <p class="detail-summary" id="project-summary"></p>
+      <a class="detail-mobile-gallery-link" href="#detail-scroll">浏览精选画廊 <span aria-hidden="true">↘</span></a>
+      <div class="detail-introduction" id="project-introduction"></div>
+      <div class="detail-facts-heading"><span>项目档案</span><span>PROJECT INFO</span></div>
+      <dl class="detail-facts" id="project-facts"></dl>
+      <div class="detail-tags" id="project-tags" aria-label="设计关键词"></div>
+      <div class="detail-reader-link"><button type="button" id="project-full-reader">阅读完整作品集 <span aria-hidden="true">↗</span></button><span class="detail-original-count">原始作品 / <b id="project-page-count"></b> 页</span></div>
+      <p class="detail-sidebar-foot">项目研究、方案设计<br>与成果展示。</p>
+    </aside>
+
+    <div class="detail-scroll" id="detail-scroll" tabindex="0" role="region" aria-label="精选作品横向画廊，可使用鼠标滚轮、触控或方向键浏览">
+      <div class="detail-gallery" id="project-gallery"></div>
+    </div>
+  </main>
+
+  <section class="detail-error" id="detail-error" hidden aria-labelledby="detail-error-title"><span>PROJECT NOT FOUND</span><h1 id="detail-error-title">暂未找到该作品</h1><p>请回到作品目录，选择需要浏览的项目。</p><a href="index.html#works">返回作品目录 <span aria-hidden="true">↗</span></a></section>
+  <p class="detail-status" id="detail-status" role="status" aria-live="polite"></p>
+  <footer class="detail-footer">
+    <div class="detail-footer-label"><span class="detail-spark" aria-hidden="true">✳</span><span>DESIGN IN DETAIL</span></div>
+    <div class="detail-gallery-controls"><span class="detail-scroll-note"><span aria-hidden="true">↔</span><span class="detail-desktop-note">滚动鼠标，横向探索</span><span class="detail-mobile-note">左右滑动，展开细节</span></span><div class="detail-progress" id="detail-progress" aria-hidden="true"><span></span></div><span class="detail-position" id="detail-position">01 / 06</span><div class="detail-navigation"><button type="button" id="detail-prev" aria-label="上一张作品卡片">←</button><button type="button" id="detail-next" aria-label="下一张作品卡片">→</button></div></div>
+  </footer>
+  <noscript><style>.detail-footer,.detail-status{display:none}body{overflow:auto}</style><p class="detail-no-script">请启用 JavaScript 以浏览作品画廊，或<a href="index.html#works">返回作品目录</a>。</p></noscript>
+</body>
+</html>

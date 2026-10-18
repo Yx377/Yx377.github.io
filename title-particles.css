@@ -1,0 +1,10 @@
+/* A restrained, finite particle introduction for the clickable project title. */
+.pv-title-button{position:relative;display:block;width:100%;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:inherit;font:inherit;font-size:inherit;font-weight:inherit;line-height:inherit;letter-spacing:inherit;text-align:left;text-wrap:inherit;text-decoration:none;cursor:pointer;isolation:isolate;-webkit-tap-highlight-color:transparent}
+.pv-title-text{position:relative;z-index:1;display:inline;color:inherit;transition:color .25s;text-decoration-thickness:1px;text-underline-offset:.18em;text-decoration-color:transparent}
+.pv-title-button:hover .pv-title-text{color:var(--pv-accent,#a34c36);text-decoration-line:underline;text-decoration-color:currentColor}
+.pv-title-button:focus-visible{outline:1px solid var(--pv-accent,#a34c36);outline-offset:7px}
+.pv-title-button:focus-visible .pv-title-text{text-decoration-line:underline;text-decoration-color:currentColor}
+.pv-title-button>.title-particles{position:absolute;left:0;top:-18px;display:block;max-width:none;pointer-events:none;user-select:none;z-index:2}
+.pv-title-button.is-particle-playing .pv-title-text{animation:pv-title-materialize 1.4s cubic-bezier(.2,.65,.3,1) both}
+@keyframes pv-title-materialize{0%{opacity:.12;filter:blur(4px)}38%{opacity:.2;filter:blur(2.7px)}74%{opacity:.8;filter:blur(.65px)}100%{opacity:1;filter:blur(0)}}
+@media(prefers-reduced-motion:reduce){.pv-title-button.is-particle-playing .pv-title-text{animation:none;opacity:1;filter:none}.pv-title-text{transition:none}}
