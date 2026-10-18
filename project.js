@@ -59,26 +59,42 @@
     return node;
   }
 
+  function replaceContents(node, children) {
+    while (node.firstChild) node.removeChild(node.firstChild);
+    children.forEach((child) => node.appendChild(child));
+  }
+
+  function watchMedia(query, listener) {
+    if (typeof query.addEventListener === 'function') query.addEventListener('change', listener);
+    else if (typeof query.addListener === 'function') query.addListener(listener);
+  }
+
   function fill(id, text) {
     const node = document.getElementById(id);
     if (node) node.textContent = text || '';
   }
 
   async function readProject(pageNumber) {
+    const openPdf = () => {
+      if (project.pdf) {
+        window.location.assign(project.pdf + (pageNumber ? `#page=${pageNumber}` : ''));
+      } else {
+        report('完整作品暂时无法打开，请稍后重试。');
+      }
+    };
     const reader = window.PortfolioReader;
     if (!reader || typeof reader.open !== 'function') {
-      report('作品阅读器暂时不可用，请稍后刷新重试。');
+      openPdf();
       return;
     }
     report('');
     try {
-      if (pageNumber && typeof reader.openAt === 'function') {
-        await reader.openAt(project, pageNumber);
-      } else {
-        await reader.open(project);
-      }
+      const opened = pageNumber && typeof reader.openAt === 'function'
+        ? await reader.openAt(project, pageNumber)
+        : await reader.open(project);
+      if (opened === false) openPdf();
     } catch (_error) {
-      report('完整作品暂时无法打开，请稍后重试。');
+      openPdf();
     }
   }
 
@@ -92,7 +108,7 @@
 
   const introduction = document.getElementById('project-introduction');
   if (introduction) {
-    introduction.replaceChildren(...(project.introduction || []).map((text) => element('p', '', text)));
+    replaceContents(introduction, (project.introduction || []).map((text) => element('p', '', text)));
   }
   const facts = document.getElementById('project-facts');
   if (facts) {
@@ -100,14 +116,14 @@
     (project.facts || []).forEach((fact) => {
       nodes.push(element('dt', '', fact.label), element('dd', '', fact.value));
     });
-    facts.replaceChildren(...nodes);
+    replaceContents(facts, nodes);
   }
   const tags = document.getElementById('project-tags');
-  if (tags) tags.replaceChildren(...(project.tags || []).map((tag) => element('span', '', tag)));
+  if (tags) replaceContents(tags, (project.tags || []).map((tag) => element('span', '', tag)));
 
   const menu = document.getElementById('detail-menu');
   if (menu) {
-    menu.replaceChildren(...Object.values(projects).map((item) => {
+    replaceContents(menu, Object.values(projects).map((item) => {
       const option = element('option', '', item.title);
       option.value = item.id;
       option.selected = item.id === projectId;
@@ -147,8 +163,8 @@
     });
     button.addEventListener('pointerleave', reset);
     button.addEventListener('pointercancel', reset);
-    reducedMotion.addEventListener('change', reset);
-    finePointer.addEventListener('change', reset);
+    watchMedia(reducedMotion, reset);
+    watchMedia(finePointer, reset);
   }
 
   const fragment = document.createDocumentFragment();
@@ -165,8 +181,9 @@
     image.loading = index < 2 ? 'eager' : 'lazy';
     image.decoding = 'async';
     if (index === 0) image.fetchPriority = 'high';
-    const metadata = window.PortfolioPageManifest?.[projectId]?.pages?.[Number(item.page) - 1];
-    if (metadata?.width && metadata?.height) {
+    const manifestEntry = window.PortfolioPageManifest && window.PortfolioPageManifest[projectId];
+    const metadata = manifestEntry && manifestEntry.pages && manifestEntry.pages[Number(item.page) - 1];
+    if (metadata && metadata.width && metadata.height) {
       image.width = metadata.width;
       image.height = metadata.height;
     }
@@ -191,7 +208,7 @@
     figure.append(button, caption);
     fragment.append(figure);
   });
-  gallery.replaceChildren(fragment);
+  replaceContents(gallery, [fragment]);
   cards = Array.from(gallery.children);
   const fullReader = document.getElementById('project-full-reader');
   if (fullReader) fullReader.addEventListener('click', () => readProject());
@@ -335,7 +352,7 @@
     schedulePaint();
   }
   window.addEventListener('resize', resize, { passive: true });
-  reducedMotion.addEventListener('change', () => {
+  watchMedia(reducedMotion, () => {
     const destination = target;
     stopAnimation();
     if (reducedMotion.matches) moveTo(destination);
@@ -348,6 +365,8 @@
 
   if (error) error.hidden = true;
   page.hidden = false;
+  const fallback = document.getElementById('detail-fallback');
+  if (fallback) fallback.hidden = true;
   ready = true;
   document.body.classList.add('page-ready');
   report('');

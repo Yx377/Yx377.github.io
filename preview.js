@@ -15,6 +15,10 @@
     return node;
   }
 
+  function clear(node) {
+    while (node.firstChild) node.removeChild(node.firstChild);
+  }
+
   function textValue(value) {
     if (typeof value === 'string' || typeof value === 'number') return String(value).trim();
     if (Array.isArray(value)) return value.map(textValue).filter(Boolean).join(' / ');
@@ -178,7 +182,7 @@
     ].filter((fact) => fact.value);
   }
 
-  function open(info) {
+  function openPreview(info) {
     if (!info || typeof info !== 'object' || Array.isArray(info) || !textValue(info.id) || !textValue(info.title)) return false;
     if (typeof HTMLDialogElement === 'undefined' || typeof HTMLDialogElement.prototype.showModal !== 'function') return false;
     createDialog();
@@ -213,14 +217,14 @@
     ui.image.alt = `${title}，作品封面`;
     ui.image.src = textValue(info.cover) || `assets/${encodeURIComponent(info.id)}/cover.webp`;
     ui.link.href = `project.html?project=${encodeURIComponent(info.id)}`;
-    ui.facts.replaceChildren();
+    clear(ui.facts);
     for (const fact of factsFor(info)) {
       const group = element('div', 'pv-fact');
       group.append(element('dt', 'pv-fact-label', fact.label), element('dd', 'pv-fact-value', fact.value));
       ui.facts.append(group);
     }
     ui.facts.hidden = !ui.facts.childElementCount;
-    ui.tags.replaceChildren();
+    clear(ui.tags);
     const tags = Array.isArray(info.tags) ? info.tags : [];
     for (const tag of tags) {
       const value = textValue(tag);
@@ -241,10 +245,26 @@
     ui.content.scrollTop = 0;
     ui.close.focus({ preventScroll: true });
     if (window.PortfolioTitleParticles) {
-      titleMotion = window.PortfolioTitleParticles.mount(ui.titleLink, title);
-      titleMotion.play();
+      try {
+        titleMotion = window.PortfolioTitleParticles.mount(ui.titleLink, title);
+        titleMotion.play();
+      } catch (_error) {
+        // The title remains a working PDF link if this decorative effect fails.
+        titleMotion = null;
+      }
     }
     return true;
+  }
+
+  function open(info) {
+    try {
+      return openPreview(info);
+    } catch (_error) {
+      // Return control to the card's native PDF link on unsupported browsers.
+      if (dialog && dialog.open && typeof dialog.close === 'function') dialog.close();
+      afterClose();
+      return false;
+    }
   }
 
   function close() {

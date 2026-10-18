@@ -52,6 +52,21 @@
     return node;
   }
 
+  function clear(node) {
+    while (node.firstChild) node.removeChild(node.firstChild);
+  }
+
+  function scrollViewport(top, left, behavior) {
+    if (typeof ui.viewport.scrollTo === 'function') {
+      try {
+        ui.viewport.scrollTo({ top, left, behavior });
+        return;
+      } catch (_error) { /* Fall back to scroll offsets on older engines. */ }
+    }
+    ui.viewport.scrollTop = top;
+    ui.viewport.scrollLeft = left;
+  }
+
   function button(className, text, label) {
     const node = element('button', className, text);
     node.type = 'button';
@@ -217,7 +232,7 @@
     const target = pageElements[nextIndex];
     const top = target.getBoundingClientRect().top - ui.viewport.getBoundingClientRect().top + ui.viewport.scrollTop - 18;
     setCurrentPage(nextIndex);
-    ui.viewport.scrollTo({ top, behavior: reduceMotion() ? 'auto' : 'smooth' });
+    scrollViewport(top, ui.viewport.scrollLeft, reduceMotion() ? 'auto' : 'smooth');
   }
 
   function setZoomWidth() {
@@ -353,7 +368,7 @@
     return article;
   }
 
-  async function open(info) {
+  async function openReader(info) {
     if (!document.body) {
       await new Promise((resolve) => document.addEventListener('DOMContentLoaded', resolve, { once: true }));
     }
@@ -365,15 +380,15 @@
     observer = null;
     pageElements = [];
     pageButtons = [];
-    ui.pageList.replaceChildren();
-    ui.select.replaceChildren();
-    ui.pages.replaceChildren();
+    clear(ui.pageList);
+    clear(ui.select);
+    clear(ui.pages);
     setZoom(false);
     setCurrentPage(0);
     ui.title.textContent = project.title || project.english || '作品';
     addIntroduction(project);
     const loading = showMessage('正在展开作品，请稍候。', false);
-    ui.viewport.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    scrollViewport(0, 0, 'auto');
     if (!dialog.open) {
       restoreTarget = document.activeElement;
       lockBackground();
@@ -382,7 +397,7 @@
     }
     const data = await manifestPromise;
     if (token !== generation || !dialog.open) return false;
-    loading.remove();
+    if (loading.parentNode) loading.parentNode.removeChild(loading);
     try {
       if (!data) throw new Error(lastError || '作品目录暂时无法加载。');
       const entry = data[project.id];
@@ -417,6 +432,21 @@
         if (!manifestLoaded) manifestPromise = loadManifest();
         open(project);
       });
+      return false;
+    }
+  }
+
+  async function open(info) {
+    if (typeof HTMLDialogElement === 'undefined' || typeof HTMLDialogElement.prototype.showModal !== 'function') {
+      lastError = '当前浏览器暂不支持作品阅读器，请直接阅读 PDF 原稿。';
+      return false;
+    }
+    try {
+      return await openReader(info);
+    } catch (error) {
+      lastError = error.message || '作品阅读器暂时无法打开。';
+      if (dialog && dialog.open && typeof dialog.close === 'function') dialog.close();
+      unlockBackground();
       return false;
     }
   }

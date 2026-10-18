@@ -88,6 +88,7 @@
     }
     if (openButton) {
       openButton.dataset.project = projectId;
+      openButton.href = (project && project.pdf) || activeCard.getAttribute('href');
       openButton.setAttribute('aria-label', `查看作品：${project ? project.title : projectId}`);
     }
     cards.forEach((card, index) => {
@@ -132,6 +133,7 @@
   }
 
   function measure() {
+    gallery.classList.add('orbit-ready');
     const width = gallery.clientWidth;
     const height = gallery.clientHeight;
     if (!width || !height) return;
@@ -155,8 +157,10 @@
     paint();
   }
 
-  document.getElementById('works-prev')?.addEventListener('click', () => move(-1));
-  document.getElementById('works-next')?.addEventListener('click', () => move(1));
+  const previousButton = document.getElementById('works-prev');
+  const nextButton = document.getElementById('works-next');
+  if (previousButton) previousButton.addEventListener('click', () => move(-1));
+  if (nextButton) nextButton.addEventListener('click', () => move(1));
   dots.forEach(dot => dot.addEventListener('click', () => select(dot.dataset.workIndex)));
 
   gallery.addEventListener('keydown', event => {
@@ -235,7 +239,7 @@
     const dy = event.clientY - pointer.y;
     if (!pointer.horizontal && Math.abs(dx) > 18 && Math.abs(dx) > Math.abs(dy) * 1.35) {
       pointer.horizontal = true;
-      gallery.setPointerCapture?.(event.pointerId);
+      if (typeof gallery.setPointerCapture === 'function') gallery.setPointerCapture(event.pointerId);
     }
     if (pointer.horizontal && event.cancelable) event.preventDefault();
   }, { passive: false });
@@ -262,7 +266,8 @@
     resizeObserver.observe(gallery);
     cards.forEach(card => resizeObserver.observe(card));
   } else window.addEventListener('resize', measure, { passive: true });
-  reducedMotion.addEventListener?.('change', () => requestPaint(true));
+  if (typeof reducedMotion.addEventListener === 'function') reducedMotion.addEventListener('change', () => requestPaint(true));
+  else if (typeof reducedMotion.addListener === 'function') reducedMotion.addListener(() => requestPaint(true));
   window.PortfolioCarousel = {
     next: () => move(1),
     previous: () => move(-1),

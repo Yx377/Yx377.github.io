@@ -107,9 +107,9 @@
       schedule(true);
     }
 
-    if (motionPreference.addEventListener) {
+    if (typeof motionPreference.addEventListener === 'function') {
       motionPreference.addEventListener('change', handleMotionChange);
-    } else {
+    } else if (typeof motionPreference.addListener === 'function') {
       motionPreference.addListener(handleMotionChange);
     }
 

@@ -7,12 +7,12 @@
   <meta name="description" content="姚星冉的设计作品详情：中文项目介绍、基本信息与六幅精选画廊，探索完整设计过程。">
   <title>作品详情 · 姚星冉</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="project.css">
-  <link rel="stylesheet" href="reader.css">
-  <script src="projects.js" defer></script>
-  <script src="assets/pages.js" defer></script>
-  <script src="reader.js" defer></script>
-  <script src="project.js" defer></script>
+  <link rel="stylesheet" href="project.css?v=20261018-compat1">
+  <link rel="stylesheet" href="reader.css?v=20261018-compat1">
+  <script src="projects.js?v=20261018-compat1" defer></script>
+  <script src="assets/pages.js?v=20261018-compat1" defer></script>
+  <script src="reader.js?v=20261018-compat1" defer></script>
+  <script src="project.js?v=20261018-compat1" defer></script>
 </head>
 <body class="detail-body">
   <a class="detail-skip" href="#detail-scroll">跳至作品画廊</a>
@@ -22,6 +22,12 @@
     <label class="detail-menu-label"><span class="detail-sr-only">切换作品</span><select id="detail-menu" aria-label="切换作品"><option>正在加载作品</option></select></label>
   </header>
 
+  <section class="detail-fallback" id="detail-fallback" aria-label="作品 PDF 原稿">
+    <p>作品原稿</p>
+    <h1>姚星冉 · 设计作品集</h1>
+    <p>可直接阅读以下作品的完整 PDF：</p>
+    <ul><li><a href="assets/pdfs/shanhai.pdf">乐游 · 山海之上 ↗</a></li><li><a href="assets/pdfs/wearloop.pdf">WearLoop ↗</a></li><li><a href="assets/pdfs/fulift.pdf">FULIFT · 扶起 ↗</a></li><li><a href="assets/pdfs/living-hive.pdf">Living Hive ↗</a></li><li><a href="assets/pdfs/soul-island.pdf">Soul Island ↗</a></li></ul>
+  </section>
   <main class="detail-page" id="detail-page" hidden>
     <aside class="detail-sidebar" aria-label="中文作品介绍与基本信息">
       <div class="detail-sidebar-top"><span>SELECTED PROJECT</span><span><b id="project-number">01</b> / 05</span></div>
@@ -49,6 +55,6 @@
     <div class="detail-footer-label"><span class="detail-spark" aria-hidden="true">✳</span><span>DESIGN IN DETAIL</span></div>
     <div class="detail-gallery-controls"><span class="detail-scroll-note"><span aria-hidden="true">↔</span><span class="detail-desktop-note">滚动鼠标，横向探索</span><span class="detail-mobile-note">左右滑动，展开细节</span></span><div class="detail-progress" id="detail-progress" aria-hidden="true"><span></span></div><span class="detail-position" id="detail-position">01 / 06</span><div class="detail-navigation"><button type="button" id="detail-prev" aria-label="上一张作品卡片">←</button><button type="button" id="detail-next" aria-label="下一张作品卡片">→</button></div></div>
   </footer>
-  <noscript><style>.detail-footer,.detail-status{display:none}body{overflow:auto}</style><p class="detail-no-script">请启用 JavaScript 以浏览作品画廊，或<a href="index.html#works">返回作品目录</a>。</p></noscript>
+  <noscript><style>.detail-footer,.detail-status{display:none}body{overflow:auto}</style></noscript>
 </body>
 </html>
