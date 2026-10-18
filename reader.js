@@ -8,9 +8,11 @@
   let ui;
   let project = null;
   let pageElements = [];
+  let pageRequests = [];
   let pageButtons = [];
   let currentPage = 0;
   let observer = null;
+  let scrollFrame = 0;
   let generation = 0;
   let zoomed = false;
   let restoreTarget = null;
@@ -43,7 +45,17 @@
     }
   }
 
-  let manifestPromise = loadManifest();
+  let manifestPromise = null;
+
+  function getManifest() {
+    if (!manifestPromise) {
+      manifestPromise = loadManifest().then((data) => {
+        if (!data) manifestPromise = null;
+        return data;
+      });
+    }
+    return manifestPromise;
+  }
 
   function element(tag, className, text) {
     const node = document.createElement(tag);
@@ -102,6 +114,15 @@
     generation += 1;
     if (observer) observer.disconnect();
     observer = null;
+    if (scrollFrame) cancelAnimationFrame(scrollFrame);
+    scrollFrame = 0;
+    pageRequests.forEach(({ image }) => image.removeAttribute('src'));
+    pageRequests = [];
+    pageElements = [];
+    pageButtons = [];
+    clear(ui.pages);
+    clear(ui.pageList);
+    clear(ui.select);
     unlockBackground();
     const target = restoreTarget;
     restoreTarget = null;
@@ -169,6 +190,28 @@
     ui.next.addEventListener('click', () => scrollToPage(currentPage + 1));
     ui.select.addEventListener('change', () => scrollToPage(Number(ui.select.value)));
     ui.zoom.addEventListener('click', () => setZoom(!zoomed));
+    if (!('IntersectionObserver' in window)) {
+      ui.viewport.addEventListener('scroll', () => {
+        if (scrollFrame || !dialog.open || !pageElements.length) return;
+        scrollFrame = requestAnimationFrame(() => {
+          scrollFrame = 0;
+          if (!dialog.open || !pageElements.length) return;
+          const bounds = ui.viewport.getBoundingClientRect();
+          const readingLine = bounds.top + Math.min(140, bounds.height * 0.2);
+          let bestIndex = 0;
+          let bestDistance = Infinity;
+          pageElements.forEach((node, index) => {
+            const pageBounds = node.getBoundingClientRect();
+            const distance = pageBounds.top <= readingLine && pageBounds.bottom >= readingLine ? 0 : Math.min(Math.abs(pageBounds.top - readingLine), Math.abs(pageBounds.bottom - readingLine));
+            if (distance < bestDistance) {
+              bestDistance = distance;
+              bestIndex = index;
+            }
+          });
+          setCurrentPage(bestIndex);
+        });
+      }, { passive: true });
+    }
     dialog.addEventListener('cancel', (event) => {
       event.preventDefault();
       close();
@@ -190,6 +233,20 @@
     }, { passive: true });
   }
 
+  function loadNearbyPages(index) {
+    if (!dialog || !dialog.open) return;
+    // Assign sources only to the reading page and its immediate neighbours.
+    // Native lazy loading can otherwise start many large pages at once.
+    [index, index + 1, index - 1].forEach((pageIndex) => {
+      const request = pageRequests[pageIndex];
+      if (!request || request.started) return;
+      request.started = true;
+      request.image.loading = 'eager';
+      request.image.fetchPriority = pageIndex === index ? 'high' : 'low';
+      request.image.src = request.src;
+    });
+  }
+
   function setCurrentPage(index) {
     const total = pageElements.length;
     if (!total) {
@@ -202,6 +259,7 @@
       return;
     }
     currentPage = Math.max(0, Math.min(index, total - 1));
+    loadNearbyPages(currentPage);
     ui.count.textContent = `${pad(currentPage + 1)} / ${pad(total)}`;
     ui.count.setAttribute('aria-label', `第 ${currentPage + 1} 页，共 ${total} 页`);
     ui.previous.disabled = currentPage === 0;
@@ -296,8 +354,10 @@
   function observePages() {
     if (observer) observer.disconnect();
     if (!('IntersectionObserver' in window)) return;
+    const token = generation;
     const intersecting = new Set();
     observer = new IntersectionObserver((entries) => {
+      if (token !== generation || !dialog.open) return;
       for (const entry of entries) {
         if (entry.isIntersecting) intersecting.add(entry.target);
         else intersecting.delete(entry.target);
@@ -337,15 +397,15 @@
     image.alt = `${project.title || project.english || '作品'} · 第 ${index + 1} 页`;
     image.width = Math.round(width);
     image.height = Math.round(height);
-    image.loading = index === 0 ? 'eager' : 'lazy';
+    image.loading = 'lazy';
     image.decoding = 'async';
-    if (index === 0) image.fetchPriority = 'high';
     const error = element('div', 'pr-reader__image-error');
     error.hidden = true;
     error.setAttribute('role', 'status');
     error.append(element('p', '', `第 ${index + 1} 页暂时未能加载。`));
     const retry = button('pr-reader__retry', '重试此页');
     retry.addEventListener('click', () => {
+      if (token !== generation || !dialog.open) return;
       error.hidden = true;
       const url = new URL(page.src, document.baseURI);
       url.searchParams.set('_reader_retry', String(Date.now()));
@@ -362,13 +422,13 @@
       error.hidden = true;
       image.classList.add('is-loaded');
     });
-    image.src = page.src;
+    pageRequests.push({ image, src: page.src, started: false });
     sheet.append(image, error);
     article.append(caption, sheet);
     return article;
   }
 
-  async function openReader(info) {
+  async function openReader(info, initialIndex) {
     if (!document.body) {
       await new Promise((resolve) => document.addEventListener('DOMContentLoaded', resolve, { once: true }));
     }
@@ -378,6 +438,8 @@
     lastError = null;
     if (observer) observer.disconnect();
     observer = null;
+    pageRequests.forEach(({ image }) => image.removeAttribute('src'));
+    pageRequests = [];
     pageElements = [];
     pageButtons = [];
     clear(ui.pageList);
@@ -395,8 +457,10 @@
       dialog.showModal();
       ui.close.focus({ preventScroll: true });
     }
-    const data = await manifestPromise;
-    if (token !== generation || !dialog.open) return false;
+    const data = await getManifest();
+    // Closing or replacing the dialog is a completed user action, not a
+    // loading failure that should unexpectedly navigate to the PDF fallback.
+    if (token !== generation || !dialog.open) return true;
     if (loading.parentNode) loading.parentNode.removeChild(loading);
     try {
       if (!data) throw new Error(lastError || '作品目录暂时无法加载。');
@@ -420,7 +484,13 @@
         ui.select.append(option);
       });
       lastError = null;
-      setCurrentPage(0);
+      const startIndex = Math.max(0, Math.min(initialIndex || 0, pageElements.length - 1));
+      setCurrentPage(startIndex);
+      if (startIndex) {
+        const target = pageElements[startIndex];
+        const top = target.getBoundingClientRect().top - ui.viewport.getBoundingClientRect().top + ui.viewport.scrollTop - 18;
+        scrollViewport(top, 0, 'auto');
+      }
       observePages();
       return true;
     } catch (error) {
@@ -429,20 +499,20 @@
       setCurrentPage(0);
       lastError = error.message;
       showMessage(error.message, true, () => {
-        if (!manifestLoaded) manifestPromise = loadManifest();
+        if (!manifestLoaded) manifestPromise = null;
         open(project);
       });
       return false;
     }
   }
 
-  async function open(info) {
+  async function open(info, initialIndex) {
     if (typeof HTMLDialogElement === 'undefined' || typeof HTMLDialogElement.prototype.showModal !== 'function') {
       lastError = '当前浏览器暂不支持作品阅读器，请直接阅读 PDF 原稿。';
       return false;
     }
     try {
-      return await openReader(info);
+      return await openReader(info, initialIndex);
     } catch (error) {
       lastError = error.message || '作品阅读器暂时无法打开。';
       if (dialog && dialog.open && typeof dialog.close === 'function') dialog.close();
@@ -454,12 +524,8 @@
   window.PortfolioReader = Object.freeze({
     open,
     async openAt(info, pageNumber) {
-      const opened = await open(info);
-      if (opened) {
-        const requested = Number(pageNumber);
-        scrollToPage(Number.isFinite(requested) ? Math.max(0, Math.trunc(requested) - 1) : 0);
-      }
-      return opened;
+      const requested = Number(pageNumber);
+      return open(info, Number.isFinite(requested) ? Math.max(0, Math.trunc(requested) - 1) : 0);
     },
     close,
     get loaded() { return manifestLoaded; },
@@ -467,6 +533,6 @@
     get isOpen() { return Boolean(dialog && dialog.open); },
     get currentPage() { return pageElements.length ? currentPage + 1 : 0; },
     get pageCount() { return pageElements.length; },
-    get ready() { return manifestPromise; }
+    get ready() { return manifestPromise || Promise.resolve(manifest); }
   });
 })();

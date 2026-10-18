@@ -97,8 +97,8 @@
         <section class="pv-content">
           <div class="pv-intro">
             <div class="pv-kicker"><span class="pv-category"></span><span class="pv-count"></span></div>
-            <h2 class="pv-title" id="pv-title"><a class="pv-title-button" target="_blank" rel="noopener" aria-describedby="pv-title-hint"><span class="pv-title-text"></span></a></h2>
-            <p class="pv-title-hint" id="pv-title-hint">点击作品名称 · 阅读 PDF 原稿 <span aria-hidden="true">↗</span></p>
+            <h2 class="pv-title" id="pv-title"><a class="pv-title-button" aria-describedby="pv-title-hint"><span class="pv-title-text"></span></a></h2>
+            <p class="pv-title-hint" id="pv-title-hint">点击作品名称 · 阅读 PDF <span aria-hidden="true">↗</span><a class="pv-pdf-download" download>下载 PDF</a></p>
             <div class="pv-video" hidden>
               <img class="pv-video-qr" src="assets/soul/video-qr.png" width="360" height="360" alt="Soul Island 原稿中的视频二维码，扫描观看作品视频" loading="lazy">
               <div class="pv-video-copy"><p class="pv-video-label">扫码观看视频</p><span>SOUL ISLAND · VIDEO</span></div>
@@ -125,6 +125,7 @@
       count: dialog.querySelector('.pv-count'),
       title: dialog.querySelector('.pv-title'),
       titleLink: dialog.querySelector('.pv-title-button'),
+      download: dialog.querySelector('.pv-pdf-download'),
       titleText: dialog.querySelector('.pv-title-text'),
       video: dialog.querySelector('.pv-video'),
       english: dialog.querySelector('.pv-english'),
@@ -153,7 +154,7 @@
     });
     dialog.addEventListener('keydown', (event) => {
       if (event.key !== 'Tab') return;
-      const controls = [ui.close, ui.titleLink, ui.link];
+      const controls = [ui.close, ui.titleLink, ui.download, ui.link];
       const first = controls[0];
       const last = controls[controls.length - 1];
       if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
@@ -200,7 +201,10 @@
     titleMotion = null;
     ui.titleText.textContent = title;
     ui.titleLink.href = textValue(info.pdf);
-    ui.titleLink.setAttribute('aria-label', `打开 ${title} 的 PDF 作品集（新标签页）`);
+    ui.titleLink.setAttribute('aria-label', `打开 ${title} 的 PDF 作品集`);
+    ui.download.href = textValue(info.pdf);
+    ui.download.download = `${info.id}.pdf`;
+    ui.download.textContent = Number(info.pdfBytes) > 0 ? `下载 PDF · ${(Number(info.pdfBytes) / 1000000).toFixed(1)} MB` : '下载 PDF';
     ui.video.hidden = info.id !== 'soul';
     ui.english.textContent = textValue(info.english);
     ui.english.hidden = !ui.english.textContent || ui.english.textContent === title;
@@ -216,7 +220,7 @@
     ui.imageError.hidden = true;
     ui.image.alt = `${title}，作品封面`;
     ui.image.src = textValue(info.cover) || `assets/${encodeURIComponent(info.id)}/cover.webp`;
-    ui.link.href = `project.html?project=${encodeURIComponent(info.id)}`;
+    ui.link.href = info.detailUrl || `project.html?project=${encodeURIComponent(info.id)}`;
     clear(ui.facts);
     for (const fact of factsFor(info)) {
       const group = element('div', 'pv-fact');

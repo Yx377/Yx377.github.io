@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const projectId = new URLSearchParams(window.location.search).get('project');
+  const projectId = new URLSearchParams(window.location.search).get('project') || document.body.getAttribute('data-project-id');
   const projects = window.PortfolioProjects || {};
   const project = Object.prototype.hasOwnProperty.call(projects, projectId) ? projects[projectId] : null;
   const page = document.getElementById('detail-page');
@@ -131,6 +131,10 @@
     }));
     menu.addEventListener('change', () => {
       if (!Object.prototype.hasOwnProperty.call(projects, menu.value)) return;
+      if (projects[menu.value].detailUrl) {
+        window.location.assign(projects[menu.value].detailUrl);
+        return;
+      }
       const url = new URL(window.location.href);
       url.search = '';
       url.searchParams.set('project', menu.value);
